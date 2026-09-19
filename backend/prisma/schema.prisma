@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id            String          @id @default(uuid())
+  name          String?
+  churnScore    Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  identities    Identity[]
+  events        Event[]
+  supportTickets SupportTicket[]
+}
+
+model Identity {
+  id         String   @id @default(uuid())
+  type       String   // email, phone, customerId, deviceId, loyaltyId
+  value      String   @unique
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([type, value])
+  @@index([value])
+}
+
+model Event {
+  id              String   @id @default(uuid())
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  channel         String   // WEBSITE, MOBILE, CALL_CENTER, PHYSICAL_STORE, EMAIL, CHAT
+  eventType       String   // PRODUCT_VIEW, PAYMENT_FAILED, SUPPORT_CALL, etc
+  identifierUsed  String   // Which identifier was matched (e.g. 'phone')
+  metadata        String?  // JSON string
+  timestamp       DateTime @default(now())
+}
+
+model SupportTicket {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status     String   // OPEN, ESCALATED, RESOLVED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
