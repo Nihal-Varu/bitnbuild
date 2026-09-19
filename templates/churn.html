@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Churn - Journey Stitching{% endblock %}
+{% block header_title %}Churn Correlation Analytics{% endblock %}
+{% block header_subtitle %}Identify which experiences drive customers away{% endblock %}
+
+{% block content %}
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <h3>Baseline Churn</h3>
+        <p class="value" id="kpi-baseline">--%</p>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid var(--danger);">
+        <h3>Churn w/ Escalation</h3>
+        <p class="value" id="kpi-esc-churn">--%</p>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid var(--warning);">
+        <h3>Churn w/ Drop-off</h3>
+        <p class="value" id="kpi-drop-churn">--%</p>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h2>Churn Risk Factors</h2>
+    <p style="color: var(--text-muted); margin-top: -0.5rem;">How different negative experiences correlate with a user eventually churning.</p>
+    <div style="height: 350px;">
+        <canvas id="churnChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadChurn() {
+        const res = await fetch('/api/analytics/churn');
+        const data = await res.json();
+        
+        document.getElementById('kpi-baseline').innerText = data.baseline + '%';
+        document.getElementById('kpi-esc-churn').innerText = data.escalation_churn + '%';
+        document.getElementById('kpi-drop-churn').innerText = data.dropoff_churn + '%';
+
+        new Chart(document.getElementById('churnChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Baseline (Average User)', 'Had an Escalation', 'Had a Drop-off Event'],
+                datasets: [{
+                    label: 'Likelihood of Churning (%)',
+                    data: [data.baseline, data.escalation_churn, data.dropoff_churn],
+                    backgroundColor: ['#3b82f6', '#ef4444', '#f59e0b'],
+                    borderRadius: 6
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
+    }
+
+    loadChurn();
+</script>
+{% endblock %}

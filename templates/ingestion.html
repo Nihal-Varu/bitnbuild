@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Pipeline Simulator - Journey Stitching{% endblock %}
+{% block header_title %}Data Pipeline Simulator{% endblock %}
+{% block header_subtitle %}Manually ingest events to demonstrate identity resolution live{% endblock %}
+
+{% block content %}
+<div class="charts-grid">
+    <div class="card">
+        <h2>Simulate Event payload</h2>
+        <form id="ingestForm" onsubmit="submitEvent(event)">
+            <div class="form-group">
+                <label>Identifier Value (e.g. email, phone, cookie_id)</label>
+                <input type="text" id="identifier" class="form-control" required placeholder="user@example.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Identifier Type</label>
+                <select id="identifier_type" class="form-control">
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="cookie">Cookie/Device ID</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Channel</label>
+                <select id="channel" class="form-control">
+                    <option value="Web">Web</option>
+                    <option value="Mobile App">Mobile App</option>
+                    <option value="Call Center">Call Center</option>
+                    <option value="Physical Store">Physical Store</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Event Type</label>
+                <select id="event_type" class="form-control">
+                    <option value="Login">Login</option>
+                    <option value="Viewed Product">Viewed Product</option>
+                    <option value="Added to Cart">Added to Cart</option>
+                    <option value="Checkout">Checkout</option>
+                    <option value="Dropped Off">Dropped Off</option>
+                    <option value="Support Call">Support Call</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select id="status" class="form-control">
+                    <option value="Completed">Completed</option>
+                    <option value="Failed">Failed</option>
+                    <option value="Escalated">Escalated</option>
+                    <option value="Unresolved">Unresolved</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Send Event to Pipeline</button>
+        </form>
+    </div>
+    
+    <div class="card">
+        <h2>Pipeline Log</h2>
+        <div id="logOutput" style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 6px; height: 350px; overflow-y: auto; font-family: monospace; font-size: 0.9rem; color: #a5b4fc;">
+            <!-- Logs appear here -->
+            <div>> Awaiting event payload...</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function submitEvent(e) {
+        e.preventDefault();
+        
+        const payload = {
+            identifier: document.getElementById('identifier').value,
+            identifier_type: document.getElementById('identifier_type').value,
+            channel: document.getElementById('channel').value,
+            event_type: document.getElementById('event_type').value,
+            status: document.getElementById('status').value,
+            details: { manual_entry: true }
+        };
+        
+        logMessage(`[SENDING] POST /api/ingest\n${JSON.stringify(payload, null, 2)}`);
+        
+        try {
+            const res = await fetch('/api/ingest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            logMessage(`[RECEIVED] 200 OK\nStitched to Customer ID: ${data.customer_id}\n------------------------`);
+            
+        } catch (err) {
+            logMessage(`[ERROR] ${err.message}`);
+        }
+    }
+    
+    function logMessage(msg) {
+        const logger = document.getElementById('logOutput');
+        logger.innerHTML += `<div style="margin-top: 1rem; white-space: pre-wrap;">${msg}</div>`;
+        logger.scrollTop = logger.scrollHeight;
+    }
+</script>
+{% endblock %}

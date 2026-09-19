@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Support - Journey Stitching{% endblock %}
+{% block header_title %}Escalations & Support{% endblock %}
+{% block header_subtitle %}Track unresolved issues and repeat contacts across channels{% endblock %}
+
+{% block content %}
+<div class="kpi-grid">
+    <div class="kpi-card" style="border-left: 4px solid var(--warning);">
+        <h3>Total Escalations</h3>
+        <p class="value" id="kpi-escalations">--</p>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid var(--danger);">
+        <h3>Unresolved Issues</h3>
+        <p class="value" id="kpi-unresolved">--</p>
+    </div>
+    <div class="kpi-card" style="border-left: 4px solid var(--primary);">
+        <h3>Repeat Contacts (>2)</h3>
+        <p class="value" id="kpi-repeat">--</p>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-container">
+        <canvas id="supportChart"></canvas>
+    </div>
+    <div class="card" style="overflow-y: auto; max-height: 350px;">
+        <h3 style="margin-top: 0;">Unresolved Cases</h3>
+        <table id="unresolvedTable">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Channel</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadSupport() {
+        const res = await fetch('/api/analytics/support');
+        const data = await res.json();
+        
+        document.getElementById('kpi-escalations').innerText = data.total_escalations;
+        document.getElementById('kpi-unresolved').innerText = data.total_unresolved;
+        document.getElementById('kpi-repeat').innerText = data.repeat_contacts;
+
+        new Chart(document.getElementById('supportChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: ['Resolved', 'Escalated', 'Unresolved/Dropped'],
+                datasets: [{
+                    data: [data.status_breakdown.Resolved || 0, data.status_breakdown.Escalated || 0, data.status_breakdown.Dropped || 0],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Support Ticket Status', color: '#f8fafc' } }
+            }
+        });
+
+        const tbody = document.querySelector('#unresolvedTable tbody');
+        data.unresolved_cases.forEach(c => {
+            tbody.innerHTML += `
+                <tr>
+                    <td style="padding: 0.5rem;">${c.customer_id}</td>
+                    <td style="padding: 0.5rem;"><span class="badge" style="background: rgba(255,255,255,0.1); color: #fff;">${c.channel}</span></td>
+                    <td style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem;">${c.timestamp}</td>
+                </tr>
+            `;
+        });
+    }
+
+    loadSupport();
+</script>
+{% endblock %}

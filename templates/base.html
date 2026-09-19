@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Journey Stitching{% endblock %}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --sidebar-width: 260px;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--surface);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .sidebar-header h2 { margin: 0; font-size: 1.2rem; color: var(--text-main); }
+        .sidebar-header p { margin: 0.25rem 0 0 0; font-size: 0.8rem; color: var(--primary); }
+
+        .nav-links {
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            padding: 0.75rem 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-main);
+            background-color: rgba(255,255,255,0.03);
+        }
+
+        .nav-link.active {
+            border-left-color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem 3rem;
+            max-width: 1400px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface);
+        }
+
+        h1 { margin: 0; font-size: 1.8rem; }
+        .subtitle { margin: 0.5rem 0 0 0; color: var(--text-muted); }
+
+        /* Shared Components */
+        .card {
+            background-color: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background-color: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            transition: transform 0.2s ease;
+        }
+
+        .kpi-card:hover { transform: translateY(-2px); }
+        .kpi-card h3 { margin: 0 0 0.5rem 0; color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .kpi-card .value { font-size: 2.2rem; font-weight: 700; margin: 0; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background-color: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            height: 350px;
+        }
+
+        /* Form Controls */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .form-control {
+            width: 100%; padding: 0.75rem;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px; color: white;
+            font-family: inherit;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem; background: var(--primary); color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: var(--primary-hover); }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Journey Stitching</h2>
+            <p>Cross-Channel Analytics</p>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                📊 Overview Dashboard
+            </a>
+            <a href="/dropoffs" class="nav-link {% if request.path == '/dropoffs' %}active{% endif %}">
+                📉 Drop-off Analysis
+            </a>
+            <a href="/support" class="nav-link {% if request.path == '/support' %}active{% endif %}">
+                ⚠️ Escalations & Support
+            </a>
+            <a href="/churn" class="nav-link {% if request.path == '/churn' %}active{% endif %}">
+                🚪 Churn Correlation
+            </a>
+            <a href="/ingestion" class="nav-link {% if request.path == '/ingestion' %}active{% endif %}">
+                ⚙️ Pipeline Simulator
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header>
+            <div>
+                <h1>{% block header_title %}Dashboard{% endblock %}</h1>
+                <p class="subtitle">{% block header_subtitle %}Overview of platform metrics{% endblock %}</p>
+            </div>
+            {% block header_actions %}{% endblock %}
+        </header>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        // Global Chart.js defaults
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

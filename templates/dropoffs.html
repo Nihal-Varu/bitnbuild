@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Drop-offs - Journey Stitching{% endblock %}
+{% block header_title %}Drop-off Analysis{% endblock %}
+{% block header_subtitle %}Understand where and why customers abandon their journey{% endblock %}
+
+{% block content %}
+<div class="charts-grid">
+    <div class="chart-container">
+        <canvas id="dropoffByChannelChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="dropoffFunnelChart"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Recent Drop-off Events</h2>
+    <table id="dropoffTable">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Customer ID</th>
+                <th>Channel</th>
+                <th>Last Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Populated by JS -->
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadDropoffs() {
+        const res = await fetch('/api/analytics/dropoffs');
+        const data = await res.json();
+        
+        // Channel Chart
+        new Chart(document.getElementById('dropoffByChannelChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.by_channel.map(d => d.channel),
+                datasets: [{
+                    label: 'Drop-offs',
+                    data: data.by_channel.map(d => d.count),
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderRadius: 6
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Drop-offs by Channel', color: '#f8fafc' } }
+            }
+        });
+
+        // Funnel Simulation (Bar chart sorted)
+        new Chart(document.getElementById('dropoffFunnelChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.by_stage.map(d => d.stage),
+                datasets: [{
+                    label: 'Abandonment Count',
+                    data: data.by_stage.map(d => d.count),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderRadius: 6
+                }]
+            },
+            options: { 
+                indexAxis: 'y',
+                responsive: true, maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Drop-offs by Journey Stage', color: '#f8fafc' } }
+            }
+        });
+
+        // Table
+        const tbody = document.querySelector('#dropoffTable tbody');
+        data.recent.forEach(e => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${e.timestamp}</td>
+                    <td>${e.customer_id}</td>
+                    <td><span class="badge" style="background: rgba(255,255,255,0.1); color: #fff;">${e.channel}</span></td>
+                    <td>${e.event_type}</td>
+                </tr>
+            `;
+        });
+    }
+
+    loadDropoffs();
+</script>
+{% endblock %}

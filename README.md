@@ -7,10 +7,11 @@ This project is a cross-channel identity resolution and event-stitching platform
 
 ## Features
 - **Identity Resolution**: Automatically stitches events from different channels based on shared identifiers (e.g., email).
-- **Data Ingestion API**: A robust API to receive events from Web, Mobile App, Call Center, and Physical Stores.
-- **Analyst Dashboard**: A visually rich dashboard to track Total Users, Global Churn Rate, Drop-offs, and Escalations.
-- **Customer Journey Timeline**: A detailed timeline view showing every touchpoint a customer had across all channels.
-- **Visual Analytics**: Charts showing Drop-offs by Channel and Escalations by Channel to quickly identify pain points.
+- **Multi-Page Dashboard**: A visually rich dashboard with a sidebar navigation spanning five distinct analytical views.
+- **Drop-off Analysis**: Funnel charts and channel breakdown to see exactly where users abandon the journey.
+- **Escalations & Support**: Identifies unresolved issues and flags users with repeat contacts.
+- **Churn Correlation**: Visualizes how negative experiences (like escalations) increase the likelihood of a customer churning.
+- **Data Pipeline Simulator**: A dedicated page to manually send custom JSON payloads to the `/api/ingest` endpoint to demonstrate the Identity Resolution algorithm live.
 
 ## Tech Stack
 - **Frontend**: HTML5, Vanilla CSS (Custom Design System with Dark Mode), Vanilla JavaScript
@@ -35,6 +36,14 @@ This project is a cross-channel identity resolution and event-stitching platform
    Open your browser and navigate to `http://127.0.0.1:5000/`.
 
 ## Hackathon Guidelines Checklist
+> [!TIP]
+> You can now push your local repository to a public GitHub repo to satisfy the hackathon rules:
+> ```bash
+> git remote add origin https://github.com/your-username/your-repo-name.git
+> git branch -M main
+> git push -u origin main
+> ```
+
 - [x] Code continuously committed to GitHub (Make sure to initialize your git repo and push!)
 - [x] Public GitHub Repository
 - [x] Project/Demo Video (To be created)

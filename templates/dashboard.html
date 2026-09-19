@@ -1,393 +1,191 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Journey Stitching Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --surface: #1e293b;
-            --primary: #3b82f6;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --danger: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
-        }
+{% extends "base.html" %}
 
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-        }
+{% block title %}Overview - Journey Stitching{% endblock %}
+{% block header_title %}Overview Dashboard{% endblock %}
+{% block header_subtitle %}High-level customer journey metrics{% endblock %}
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+{% block header_actions %}
+<button onclick="refreshData()" class="btn">Refresh Data</button>
+{% endblock %}
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--surface);
-        }
+{% block extra_css %}
+<style>
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    th { color: var(--text-muted); font-weight: 600; }
+    tr:hover { background-color: rgba(255,255,255,0.02); cursor: pointer; }
+    
+    .badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge.churned { background-color: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge.active { background-color: rgba(16, 185, 129, 0.2); color: var(--success); }
 
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
+    .modal {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+        z-index: 1000; align-items: center; justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+        background: var(--surface); width: 90%; max-width: 800px;
+        max-height: 80vh; border-radius: 12px; padding: 2rem;
+        overflow-y: auto; position: relative;
+    }
+    .close-btn {
+        position: absolute; top: 1rem; right: 1rem; background: none;
+        border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;
+    }
 
-        .kpi-card {
-            background-color: var(--surface);
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease;
-        }
+    .timeline { position: relative; padding-left: 2rem; margin-top: 2rem; }
+    .timeline::before {
+        content: ''; position: absolute; left: 7px; top: 0; bottom: 0;
+        width: 2px; background: var(--primary); opacity: 0.3;
+    }
+    .timeline-event {
+        position: relative; margin-bottom: 1.5rem; padding: 1rem;
+        background: rgba(255,255,255,0.03); border-radius: 8px;
+        border-left: 3px solid var(--primary);
+    }
+    .timeline-event::before {
+        content: ''; position: absolute; left: -2.3rem; top: 1.2rem;
+        width: 12px; height: 12px; border-radius: 50%;
+        background: var(--primary); border: 2px solid var(--surface);
+    }
+    .event-time { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .event-title { font-weight: 600; margin: 0 0 0.25rem 0; }
+    .event-channel {
+        display: inline-block; font-size: 0.75rem; padding: 2px 6px;
+        background: rgba(59, 130, 246, 0.2); color: var(--primary); border-radius: 4px;
+    }
+</style>
+{% endblock %}
 
-        .kpi-card:hover {
-            transform: translateY(-2px);
-        }
+{% block content %}
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <h3>Total Profiles</h3>
+        <p class="value" id="kpi-total-users">--</p>
+    </div>
+    <div class="kpi-card">
+        <h3>Global Churn Rate</h3>
+        <p class="value" id="kpi-churn-rate" style="color: var(--danger);">--%</p>
+    </div>
+    <div class="kpi-card">
+        <h3>Total Drop-offs</h3>
+        <p class="value" id="kpi-drop-offs">--</p>
+    </div>
+    <div class="kpi-card">
+        <h3>Total Escalations</h3>
+        <p class="value" id="kpi-escalations">--</p>
+    </div>
+</div>
 
-        .kpi-card h3 {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+<div class="card">
+    <h2>Recent Customer Journeys</h2>
+    <p style="color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 1rem;">Click 'View Journey' to see the unified timeline stitched from all channels.</p>
+    <table id="customerTable">
+        <thead>
+            <tr>
+                <th>Customer ID</th>
+                <th>Primary Identifier</th>
+                <th>Joined Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Populated by JS -->
+        </tbody>
+    </table>
+</div>
 
-        .kpi-card .value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .chart-container {
-            background-color: var(--surface);
-            padding: 1.5rem;
-            border-radius: 12px;
-            height: 350px;
-        }
-
-        .customer-section {
-            background-color: var(--surface);
-            padding: 1.5rem;
-            border-radius: 12px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        th {
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background-color: rgba(255,255,255,0.02);
-            cursor: pointer;
-        }
-
-        .badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .badge.churned { background-color: rgba(239, 68, 68, 0.2); color: var(--danger); }
-        .badge.active { background-color: rgba(16, 185, 129, 0.2); color: var(--success); }
-
-        /* Timeline Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--surface);
-            width: 90%;
-            max-width: 800px;
-            max-height: 80vh;
-            border-radius: 12px;
-            padding: 2rem;
-            overflow-y: auto;
-            position: relative;
-        }
-        .close-btn {
-            position: absolute;
-            top: 1rem; right: 1rem;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        .timeline {
-            position: relative;
-            padding-left: 2rem;
-            margin-top: 2rem;
-        }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 7px;
-            top: 0; bottom: 0;
-            width: 2px;
-            background: var(--primary);
-            opacity: 0.3;
-        }
-        .timeline-event {
-            position: relative;
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            background: rgba(255,255,255,0.03);
-            border-radius: 8px;
-            border-left: 3px solid var(--primary);
-        }
-        .timeline-event::before {
-            content: '';
-            position: absolute;
-            left: -2.3rem;
-            top: 1.2rem;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--primary);
-            border: 2px solid var(--surface);
-        }
-        .event-time {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-        .event-title { font-weight: 600; margin: 0 0 0.25rem 0; }
-        .event-channel {
-            display: inline-block;
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--primary);
-            border-radius: 4px;
-        }
-
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <div>
-                <h1 style="margin: 0; font-size: 1.8rem;">Cross-Channel Journey Stitching</h1>
-                <p style="margin: 0.5rem 0 0 0; color: var(--text-muted);">Unified identity resolution & event tracking</p>
-            </div>
-            <button onclick="refreshData()" style="padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Refresh Data</button>
-        </header>
-
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <h3>Total Stitched Profiles</h3>
-                <p class="value" id="kpi-total-users">--</p>
-            </div>
-            <div class="kpi-card">
-                <h3>Global Churn Rate</h3>
-                <p class="value" id="kpi-churn-rate" style="color: var(--danger);">--%</p>
-            </div>
-            <div class="kpi-card">
-                <h3>Total Drop-offs</h3>
-                <p class="value" id="kpi-drop-offs">--</p>
-            </div>
-            <div class="kpi-card">
-                <h3>Total Escalations</h3>
-                <p class="value" id="kpi-escalations">--</p>
-            </div>
-        </div>
-
-        <div class="charts-grid">
-            <div class="chart-container">
-                <canvas id="dropoffChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="escalationChart"></canvas>
-            </div>
-        </div>
-
-        <div class="customer-section">
-            <h2>Recent Customer Journeys</h2>
-            <table id="customerTable">
-                <thead>
-                    <tr>
-                        <th>Customer ID</th>
-                        <th>Primary Email</th>
-                        <th>Created At</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
+<!-- Timeline Modal -->
+<div class="modal" id="timelineModal">
+    <div class="modal-content">
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+        <h2 id="modalTitle">Customer Journey</h2>
+        <div class="timeline" id="timelineContainer">
+            <!-- Populated by JS -->
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <!-- Timeline Modal -->
-    <div class="modal" id="timelineModal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-            <h2 id="modalTitle">Customer Journey</h2>
-            <div class="timeline" id="timelineContainer">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let dropoffChartInst = null;
-        let escalationChartInst = null;
-
-        Chart.defaults.color = '#94a3b8';
-        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
-
-        async function refreshData() {
-            try {
-                const res = await fetch('/api/analytics');
-                const data = await res.json();
-                
-                document.getElementById('kpi-total-users').innerText = data.total_users;
-                document.getElementById('kpi-churn-rate').innerText = data.churn_rate + '%';
-                
-                const totalDropoffs = data.drop_offs.reduce((acc, curr) => acc + curr.count, 0);
-                document.getElementById('kpi-drop-offs').innerText = totalDropoffs;
-                
-                const totalEscalations = data.escalations.reduce((acc, curr) => acc + curr.count, 0);
-                document.getElementById('kpi-escalations').innerText = totalEscalations;
-
-                updateCharts(data);
-                loadCustomers();
-            } catch (err) {
-                console.error("Error fetching analytics", err);
-            }
-        }
-
-        function updateCharts(data) {
-            const ctx1 = document.getElementById('dropoffChart').getContext('2d');
-            if (dropoffChartInst) dropoffChartInst.destroy();
-            dropoffChartInst = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: data.drop_offs.map(d => d.channel),
-                    datasets: [{
-                        label: 'Drop-offs by Channel',
-                        data: data.drop_offs.map(d => d.count),
-                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                        borderRadius: 6
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            const ctx2 = document.getElementById('escalationChart').getContext('2d');
-            if (escalationChartInst) escalationChartInst.destroy();
-            escalationChartInst = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: data.escalations.map(d => d.channel),
-                    datasets: [{
-                        data: data.escalations.map(d => d.count),
-                        backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: 'Escalations by Channel' } }
-                }
-            });
-        }
-
-        async function loadCustomers() {
-            const res = await fetch('/api/customers');
-            const customers = await res.json();
-            const tbody = document.querySelector('#customerTable tbody');
-            tbody.innerHTML = '';
+{% block extra_js %}
+<script>
+    async function refreshData() {
+        try {
+            const res = await fetch('/api/analytics');
+            const data = await res.json();
             
-            customers.forEach(c => {
-                const tr = document.createElement('tr');
-                const status = c.churned ? '<span class="badge churned">Churned</span>' : '<span class="badge active">Active</span>';
-                tr.innerHTML = `
-                    <td>${c.id}</td>
-                    <td>${c.email}</td>
-                    <td>${new Date(c.created_at).toLocaleDateString()}</td>
-                    <td>${status}</td>
-                    <td><button onclick="viewJourney('${c.id}')" style="background:none; border:1px solid var(--primary); color:var(--primary); padding:4px 8px; border-radius:4px; cursor:pointer;">View Journey</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
+            document.getElementById('kpi-total-users').innerText = data.total_users;
+            document.getElementById('kpi-churn-rate').innerText = data.churn_rate + '%';
+            
+            const totalDropoffs = data.drop_offs.reduce((acc, curr) => acc + curr.count, 0);
+            document.getElementById('kpi-drop-offs').innerText = totalDropoffs;
+            
+            const totalEscalations = data.escalations.reduce((acc, curr) => acc + curr.count, 0);
+            document.getElementById('kpi-escalations').innerText = totalEscalations;
 
-        async function viewJourney(customerId) {
-            const res = await fetch(`/api/customers/${customerId}/journey`);
-            const events = await res.json();
-            
-            const container = document.getElementById('timelineContainer');
-            container.innerHTML = '';
-            
+            loadCustomers();
+        } catch (err) {
+            console.error("Error fetching analytics", err);
+        }
+    }
+
+    async function loadCustomers() {
+        const res = await fetch('/api/customers');
+        const customers = await res.json();
+        const tbody = document.querySelector('#customerTable tbody');
+        tbody.innerHTML = '';
+        
+        customers.forEach(c => {
+            const tr = document.createElement('tr');
+            const status = c.churned ? '<span class="badge churned">Churned</span>' : '<span class="badge active">Active</span>';
+            tr.innerHTML = `
+                <td>${c.id}</td>
+                <td>${c.email || c.phone || 'Unknown'}</td>
+                <td>${new Date(c.created_at).toLocaleDateString()}</td>
+                <td>${status}</td>
+                <td><button onclick="viewJourney('${c.id}')" style="background:none; border:1px solid var(--primary); color:var(--primary); padding:4px 8px; border-radius:4px; cursor:pointer;">View Journey</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function viewJourney(customerId) {
+        const res = await fetch(`/api/customers/${customerId}/journey`);
+        const events = await res.json();
+        
+        const container = document.getElementById('timelineContainer');
+        container.innerHTML = '';
+        
+        if (events.length === 0) {
+            container.innerHTML = '<p>No events found for this customer.</p>';
+        } else {
             events.forEach(e => {
                 const color = e.status === 'Failed' || e.status === 'Dropped' ? 'var(--danger)' : 
-                              e.status === 'Escalated' ? 'var(--warning)' : 'var(--primary)';
+                              e.status === 'Escalated' || e.status === 'Unresolved' ? 'var(--warning)' : 'var(--primary)';
                               
                 container.innerHTML += `
                     <div class="timeline-event" style="border-left-color: ${color}">
                         <div class="event-time">${e.timestamp}</div>
                         <h4 class="event-title">${e.event_type} <span style="font-size:0.8em; font-weight:normal; color:${color}">(${e.status})</span></h4>
                         <span class="event-channel">${e.channel}</span>
+                        ${e.details ? `<p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.5rem 0 0 0;">${e.details}</p>` : ''}
                     </div>
                 `;
             });
-            
-            document.getElementById('modalTitle').innerText = `Journey: ${customerId}`;
-            document.getElementById('timelineModal').classList.add('active');
         }
+        
+        document.getElementById('modalTitle').innerText = `Journey: ${customerId}`;
+        document.getElementById('timelineModal').classList.add('active');
+    }
 
-        function closeModal() {
-            document.getElementById('timelineModal').classList.remove('active');
-        }
+    function closeModal() {
+        document.getElementById('timelineModal').classList.remove('active');
+    }
 
-        // Init
-        refreshData();
-    </script>
-</body>
-</html>
+    // Init
+    refreshData();
+</script>
+{% endblock %}
