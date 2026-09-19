@@ -1,102 +1,104 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, AlertTriangle, HelpCircle, Activity } from "lucide-react"
+"use client";
 
-export default function Dashboard() {
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ArrowRight, Activity, Users, Network, Code2, Globe, Shield } from "lucide-react";
+
+export default function LandingPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h2>
-        <p className="text-slate-400">High-level view of your customer journeys and system health.</p>
-      </div>
+    <div className="min-h-screen bg-slate-950 text-slate-50 relative overflow-hidden flex flex-col items-center">
+      {/* Dynamic Background Gradients */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total Customers</CardTitle>
-            <Users className="h-4 w-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">10</div>
-            <p className="text-xs text-slate-500">+10 since last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Active Journeys</CardTitle>
-            <Activity className="h-4 w-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">10</div>
-            <p className="text-xs text-slate-500">Currently in progress</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-slate-900 border-slate-800 border-l-4 border-l-yellow-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Escalations</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">2</div>
-            <p className="text-xs text-slate-500">Requires attention</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-slate-900 border-slate-800 border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Unresolved Issues</CardTitle>
-            <HelpCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">1</div>
-            <p className="text-xs text-slate-500">No resolution event found</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col items-center justify-center w-full px-6 pt-32 pb-20 relative z-10 text-center max-w-5xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-8"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+          </span>
+          Live Event Ingestion Active
+        </motion.div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-white">High Churn Risk Customers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-slate-400 text-sm">
-              <p className="mb-4">Rule-based churn risk calculation (0-100 score).</p>
-              <div className="border border-slate-800 rounded-md overflow-hidden">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-950 text-slate-300">
-                    <tr>
-                      <th className="p-3">Customer</th>
-                      <th className="p-3">Score</th>
-                      <th className="p-3">Primary Reason</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-slate-800">
-                      <td className="p-3">John Smith</td>
-                      <td className="p-3"><span className="px-2 py-1 bg-red-950 text-red-400 rounded-full text-xs font-semibold">80</span></td>
-                      <td className="p-3 text-slate-500">+25 Refund Request, +15 Escalation</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="text-5xl md:text-7xl font-bold tracking-tight mb-6"
+        >
+          Unify Your <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+            Customer Journey
+          </span>
+        </motion.h1>
 
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-white">Channel Volume</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-48 flex items-center justify-center text-slate-500 border border-slate-800 border-dashed rounded-md bg-slate-950">
-              {/* We will add a Recharts BarChart here later */}
-              Chart placeholder (Waiting on API)
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-lg md:text-xl text-slate-400 max-w-2xl mb-12"
+        >
+          A powerful identity resolution platform that stitches disjointed cross-channel events into a single, unified timeline to track drop-offs, escalations, and churn.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
+        >
+          <Link href="/dashboard" className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-slate-950 hover:bg-slate-200 transition-colors rounded-lg font-semibold shadow-lg shadow-white/5">
+            Open Dashboard
+            <ArrowRight size={18} />
+          </Link>
+          <Link href="/event-simulator" className="flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 border border-slate-800 hover:bg-slate-800 transition-colors rounded-lg font-medium text-slate-300">
+            <Activity size={18} />
+            Try Simulator
+          </Link>
+        </motion.div>
+
+        {/* Feature Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.5 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-32 text-left"
+        >
+          <FeatureCard 
+            icon={<Network className="text-blue-400" size={24} />}
+            title="Identity Stitching"
+            description="Automatically link anonymous browser cookies, device IDs, and loyalty numbers to a single verified customer profile."
+          />
+          <FeatureCard 
+            icon={<Globe className="text-purple-400" size={24} />}
+            title="Cross-Channel Analytics"
+            description="Visualize the full path from marketing website to mobile app, support calls, and physical store visits."
+          />
+          <FeatureCard 
+            icon={<Shield className="text-emerald-400" size={24} />}
+            title="Churn Prediction"
+            description="Identify drop-offs and unresolved support escalations before they result in permanent customer churn."
+          />
+        </motion.div>
+      </main>
     </div>
-  )
+  );
+}
+
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+  return (
+    <div className="bg-slate-900/50 border border-slate-800/50 backdrop-blur-xl p-6 rounded-2xl hover:bg-slate-800/50 transition-colors duration-300">
+      <div className="h-12 w-12 rounded-lg bg-slate-800 flex items-center justify-center mb-6">
+        {icon}
+      </div>
+      <h3 className="text-lg font-semibold text-slate-200 mb-2">{title}</h3>
+      <p className="text-slate-400 text-sm leading-relaxed">{description}</p>
+    </div>
+  );
 }
