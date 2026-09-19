@@ -112,11 +112,11 @@ export default function EventSimulator() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-slate-400">Email Address</label>
-                  <input name="email" value={formData.email} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-50 outline-none focus:ring-1 focus:ring-blue-500" placeholder="john@gmail.com" />
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-50 outline-none focus:ring-1 focus:ring-blue-500 invalid:border-red-500 invalid:text-red-500" placeholder="john@gmail.com" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-slate-400">Phone Number</label>
-                  <input name="phone" value={formData.phone} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-50 outline-none focus:ring-1 focus:ring-blue-500" placeholder="9999999999" />
+                  <input type="tel" pattern="[0-9]{10}" title="Phone number must be exactly 10 digits" name="phone" value={formData.phone} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-50 outline-none focus:ring-1 focus:ring-blue-500 invalid:border-red-500 invalid:text-red-500" placeholder="9999999999" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-slate-400">Customer ID</label>
